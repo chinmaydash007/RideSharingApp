@@ -35,25 +35,49 @@ class MapsPresenter(private val networkService: NetworkService) : WebSocketListe
     }
 
     override fun onMessage(data: String) {
-        Log.d(TAG, "onMessage data:$data")
         val jsonObject = JSONObject(data)
         when (jsonObject.getString(Constants.TYPE)) {
             Constants.NEAR_BY_CABS -> {
+                Log.d(TAG, "NEAR BY CARS")
+
                 handleOnMessageNearByCabs(jsonObject)
             }
             Constants.CAB_BOOKED -> {
                 view?.informCabBook()
+                Log.d(TAG, "CAR BOOKED")
             }
-            Constants.PICKUP_PATH -> {
+            Constants.PICKUP_PATH, Constants.TRIP_PATH -> {
+                Log.d(TAG, "PICKUP PATH")
+
                 val jsonArray = jsonObject.getJSONArray("path")
-                val pickUpPath= arrayListOf<LatLng>()
+                val pickUpPath = arrayListOf<LatLng>()
                 for (i in 0 until jsonArray.length()) {
                     val lat = (jsonArray.get(i) as JSONObject).getDouble(Constants.LAT)
                     val lng = (jsonArray.get(i) as JSONObject).getDouble(Constants.LNG)
                     val latLng = LatLng(lat, lng)
                     pickUpPath.add(latLng)
+                    Log.d("mytag", "pickup ${latLng.latitude} ${latLng.longitude}")
 
                 }
+                view?.showPath(pickUpPath)
+            }
+            Constants.LOCATION -> {
+                val latCurrent = jsonObject.getDouble("lat")
+                val lngCurrent = jsonObject.getDouble("lng")
+                Log.d("mytag", "cab location  ${latCurrent} ${lngCurrent}")
+                view?.updateCabLocation(LatLng(latCurrent, lngCurrent))
+            }
+            Constants.CAB_IS_ARRIVING -> {
+                view?.informCabIsArriving()
+            }
+            Constants.CAB_ARRIVED -> {
+                view?.informCabArrived()
+            }
+            Constants.TRIP_START -> {
+                view?.informTripStart()
+            }
+            Constants.TRIP_END -> {
+                view?.informTripEnd()
             }
         }
 
